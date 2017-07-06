@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        body {
+            width: 992px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        th, td {
+            height: 30px;
+            vertical-align: bottom;
+            padding: 15px;
+            text-align: left;
+        }
+
+        tr.record:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h2>GitHub Repository Search</h2>
+    <input type="text" id="searchInput" placeholder="Search Repositories" />
+    <button type="button" id="searchButton">Search</button>
+    <div id="results">
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.js"
+            integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+            crossorigin="anonymous">
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jsrender/0.9.84/jsrender.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            $("#searchButton").click(function () {
+                var resultsDiv = $("#results");
+                resultsDiv.empty();
+                resultsDiv.html("<h3>Loading...</h3>")
+                var searchQuery = $("#searchInput").val();
+                $.get("api/userRepositories/" + searchQuery)
+                 .done(function (data) {
+                     var resultsDiv = $("#results");
+                     resultsDiv.empty();
+                     var template = $.templates("#RepositoryTemplate");
+                     var dataToRender = { repositories: data };
+                     var htmlOutput = template.render(dataToRender,
+                         {
+                             formatDate: function (date) {
+                                 return new Date(date).toLocaleString();
+                             }
+                         });
+                     resultsDiv.html(htmlOutput);
+                 })
+                .fail(function () {
+                    var resultsDiv = $("#results");
+                    resultsDiv.empty();
+                    resultsDiv.html("<p> Something went wrong. Please try again!</p>");
+                });
+            });
+        });
+    </script>
+    <script id="RepositoryTemplate" type="text/x-jsrender">
+        <table>
+            <thead>
+                <tr>
+                    <th>Owner Name</th>
+                    <th>Name</th>
+                    <th>URL</th>
+                    <th>Created Date</th>
+                    <th>Last Push Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{for repositories}}
+                <tr class="record">
+                    <td>{{:ownerName}}</td>
+                    <td>{{:name}}</td>
+                    <td>{{:url}}</td>
+                    <td>{{:createdDate}}</td>
+                    <td>{{:lastPushDate}}</td>
+                </tr>
+                <tr>
+                    <td colspan="5">
+                        <h4>Commits</h4>
+                        <table style="background-color:lavenderblush">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Message</th>
+                                    <th>SHA</th>
+                                    <th>Commit Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{for commits}}
+                                <tr>
+                                    <td>{{:name}}</td>
+                                    <td>{{:message}}</td>
+                                    <td>{{:sha}}</td>
+                                    <td>{{:date}}</td>
+                                </tr>
+                                {{/for}}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {{/for}}
+            </tbody>
+        </table>
+    </script>
+</body>
+</html>
